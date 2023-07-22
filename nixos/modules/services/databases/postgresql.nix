@@ -548,7 +548,7 @@ in
                 let
                   userPermissions = concatStringsSep "\n"
                     (mapAttrsToList
-                      (database: permission: ''$PSQL -tAc 'GRANT ${permission} ON ${database} TO "${user.name}"' '')
+                      (database: permission: ''$PSQL -tAc 'GRANT ${permission} ON "${database}" TO "${user.name}"' '')
                       user.ensurePermissions
                     );
 
