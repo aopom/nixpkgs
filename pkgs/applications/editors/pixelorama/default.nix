@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, godot-headless, godot-export-templates }:
+{ lib, stdenv, fetchFromGitHub, godot-headless, godot-export-templates, nix-update-script }:
 
 let
   preset =
@@ -7,15 +7,15 @@ let
       else "Linux/X11 32-bit"
     else if stdenv.isDarwin then "Mac OSX"
     else throw "unsupported platform";
-in stdenv.mkDerivation rec {
+in stdenv.mkDerivation (finalAttrs: {
   pname = "pixelorama";
-  version = "0.10.3";
+  version = "0.11.1";
 
   src = fetchFromGitHub {
     owner = "Orama-Interactive";
     repo = "Pixelorama";
-    rev = "v${version}";
-    sha256 = "sha256-RFE7K8NMl0COzFEhUqWhhYd5MGBsCDJf0T5daPu/4DI=";
+    rev = "v${finalAttrs.version}";
+    sha256 = "sha256-+gPkuVzQ86MzHQ0AjnPDdyk2p7eIxtggq+KJ43KVbk8=";
   };
 
   nativeBuildInputs = [
@@ -47,11 +47,14 @@ in stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
+  passthru.updateScript = nix-update-script { };
+
   meta = with lib; {
     homepage = "https://orama-interactive.itch.io/pixelorama";
     description = "A free & open-source 2D sprite editor, made with the Godot Engine!";
+    changelog = "https://github.com/Orama-Interactive/Pixelorama/blob/${finalAttrs.src.rev}/CHANGELOG.md";
     license = licenses.mit;
     platforms = [ "i686-linux" "x86_64-linux" ];
     maintainers = with maintainers; [ felschr ];
   };
-}
+})

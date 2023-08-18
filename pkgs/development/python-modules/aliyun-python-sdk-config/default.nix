@@ -7,14 +7,14 @@
 
 buildPythonPackage rec {
   pname = "aliyun-python-sdk-config";
-  version = "2.2.8";
+  version = "2.2.10";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-0rGI2YMT78gstfHmQD63hdvICQ3WlKgkx8unsDegaXw=";
+    hash = "sha256-Yv0RIraWi1HMlzIQkH8JXvVi3FvyCmDvH9XjAamEDQo=";
   };
 
   propagatedBuildInputs = [

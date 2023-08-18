@@ -1,6 +1,7 @@
 { lib
 , stdenv
 , fetchFromGitHub
+, fetchpatch
 , nix-update-script
 , meson
 , ninja
@@ -15,14 +16,31 @@
 
 stdenv.mkDerivation rec {
   pname = "elementary-default-settings";
-  version = "7.0.1";
+  version = "7.0.2";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = "default-settings";
     rev = version;
-    sha256 = "sha256-RPnERK93GCfWyw1sIW5BitCIo11/t1koV4r1+NF5NdI=";
+    sha256 = "sha256-YFI1UM7CxjYkoIhSg9Fn81Ze6DX7D7p89xibk7ik8bI=";
   };
+
+  patches = [
+    # Don't set picture-uri-dark. elementary-gsettings-schemas won't
+    # aware of our custom remove-backgrounds.gschema.override so it
+    # will be a confusing invalid value otherwise (though gala actually
+    # can handle it well).
+    # https://github.com/elementary/default-settings/pull/282
+    (fetchpatch {
+      url = "https://github.com/elementary/default-settings/commit/881f84b8316e549ab627b7ac9acf352e0346a1a4.patch";
+      sha256 = "sha256-zf2Anr+ljLjHbn5ZmRj3nCRVJ52rwe4EkwdIfSOGeLQ=";
+    })
+    # https://github.com/elementary/default-settings/pull/283
+    (fetchpatch {
+      url = "https://github.com/elementary/default-settings/commit/37ef6062a8651875dd9d927c5730155c8b26e953.patch";
+      sha256 = "sha256-u7rrwuHgMPn1eIyIuwJcBgy8SshaXgrgFTSNm8IHbaY=";
+    })
+  ];
 
   nativeBuildInputs = [
     accountsservice

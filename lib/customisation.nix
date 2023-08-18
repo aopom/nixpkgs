@@ -46,12 +46,6 @@ rec {
       //
       (drv.passthru or {})
       //
-      # TODO(@Artturin): remove before release 23.05 and only have __spliced.
-      (lib.optionalAttrs (drv ? crossDrv && drv ? nativeDrv) {
-        crossDrv = overrideDerivation drv.crossDrv f;
-        nativeDrv = overrideDerivation drv.nativeDrv f;
-      })
-      //
       lib.optionalAttrs (drv ? __spliced) {
         __spliced = {} // (lib.mapAttrs (_: sDrv: overrideDerivation sDrv f) drv.__spliced);
       });
@@ -275,10 +269,11 @@ rec {
     let self = f self // {
           newScope = scope: newScope (self // scope);
           callPackage = self.newScope {};
-          overrideScope = g: lib.warn
-            "`overrideScope` (from `lib.makeScope`) is deprecated. Do `overrideScope' (self: super: { … })` instead of `overrideScope (super: self: { … })`. All other overrides have the parameters in that order, including other definitions of `overrideScope`. This was the only definition violating the pattern."
-            (makeScope newScope (lib.fixedPoints.extends (lib.flip g) f));
-          overrideScope' = g: makeScope newScope (lib.fixedPoints.extends g f);
+          overrideScope = g: makeScope newScope (lib.fixedPoints.extends g f);
+          # Remove after 24.11 is released.
+          overrideScope' = g: lib.warnIf (lib.isInOldestRelease 2311)
+            "`overrideScope'` (from `lib.makeScope`) has been renamed to `overrideScope`."
+            (makeScope newScope (lib.fixedPoints.extends g f));
           packages = f;
         };
     in self;

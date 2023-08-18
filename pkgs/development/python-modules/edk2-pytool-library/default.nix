@@ -3,24 +3,33 @@
 , fetchFromGitHub
 , setuptools
 , setuptools-scm
+, pyasn1
+, pyasn1-modules
+, cryptography
 , pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "edk2-pytool-library";
-  version = "0.15.0";
+  version = "0.16.2";
   format = "pyproject";
 
   src = fetchFromGitHub {
     owner = "tianocore";
     repo = "edk2-pytool-library";
     rev = "v${version}";
-    hash = "sha256-YNXaptzsIlMXaZu8mFihsaQfmPALUcL47BFn4m8GMfY=";
+    hash = "sha256-JL9znvXl+RIEzycKhXkggEJ87bQ+UzspBD1YM3AoYlc=";
   };
 
   nativeBuildInputs = [
     setuptools
     setuptools-scm
+  ];
+
+  propagatedBuildInputs = [
+    pyasn1
+    pyasn1-modules
+    cryptography
   ];
 
   nativeCheckInputs = [

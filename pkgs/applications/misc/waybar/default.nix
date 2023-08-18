@@ -16,7 +16,9 @@
 , howard-hinnant-date
 , libinotify-kqueue
 , libxkbcommon
+, cavaSupport     ? true,  alsa-lib, fftw, iniparser, ncurses, pipewire, portaudio, SDL2
 , evdevSupport    ? true,  libevdev
+, hyprlandSupport ? false, hyprland
 , inputSupport    ? true,  libinput
 , jackSupport     ? true,  libjack2
 , mpdSupport      ? true,  libmpdclient
@@ -33,17 +35,40 @@
 , wireplumberSupport ? true, wireplumber
 , withMediaPlayer ? mprisSupport && false, glib, gobject-introspection, python3
 }:
-
+let
+  # Derived from subprojects/cava.wrap
+  libcava = rec {
+    version = "0.8.5";
+    src = fetchFromGitHub {
+      owner = "LukashonakV";
+      repo = "cava";
+      rev = version;
+      hash = "sha256-b/XfqLh8PnW018sGVKRRlFvBpo2Ru1R2lUeTR7pugBo=";
+    };
+  };
+in
 stdenv.mkDerivation rec {
   pname = "waybar";
-  version = "0.9.17";
+  version = "0.9.21";
 
   src = fetchFromGitHub {
     owner = "Alexays";
     repo = "Waybar";
     rev = version;
-    hash = "sha256-sdNenmzI/yvN9w4Z83ojDJi+2QBx2hxhJQCFkc5kCZw=";
+    hash = "sha256-VvQTRo2MuJ475lKrExVhzi74fb1wAw0gHD1v4rcWIDk=";
   };
+
+  postUnpack = lib.optional cavaSupport ''
+    (
+      cd "$sourceRoot"
+      cp -R --no-preserve=mode,ownership ${libcava.src} subprojects/cava-0.8.5
+      patchShebangs .
+    )
+  '';
+
+  # Patch for workspaces support in wlr/workspaces
+  # See https://wiki.hyprland.org/Useful-Utilities/Status-Bars/#waybar
+  patches = lib.optional hyprlandSupport [ ./hyprland.diff ];
 
   nativeBuildInputs = [
     meson ninja pkg-config scdoc wrapGAppsHook
@@ -60,7 +85,15 @@ stdenv.mkDerivation rec {
   buildInputs = with lib;
     [ wayland wlroots gtkmm3 libsigcxx jsoncpp spdlog gtk-layer-shell howard-hinnant-date libxkbcommon ]
     ++ optional  (!stdenv.isLinux) libinotify-kqueue
+    ++ optional  cavaSupport   alsa-lib
+    ++ optional  cavaSupport   iniparser
+    ++ optional  cavaSupport   fftw
+    ++ optional  cavaSupport   ncurses
+    ++ optional  cavaSupport   pipewire
+    ++ optional  cavaSupport   portaudio
+    ++ optional  cavaSupport   SDL2
     ++ optional  evdevSupport  libevdev
+    ++ optional  hyprlandSupport hyprland
     ++ optional  inputSupport  libinput
     ++ optional  jackSupport   libjack2
     ++ optional  mpdSupport    libmpdclient
@@ -80,6 +113,7 @@ stdenv.mkDerivation rec {
   mesonFlags = (lib.mapAttrsToList
     (option: enable: "-D${option}=${if enable then "enabled" else "disabled"}")
     {
+      cava = cavaSupport;
       dbusmenu-gtk = traySupport;
       jack = jackSupport;
       libinput = inputSupport;
@@ -98,7 +132,7 @@ stdenv.mkDerivation rec {
     "-Dsystemd=disabled"
     "-Dgtk-layer-shell=enabled"
     "-Dman-pages=enabled"
-  ];
+  ] ++ lib.optional hyprlandSupport "-Dexperimental=true";
 
   preFixup = lib.optionalString withMediaPlayer ''
       cp $src/resources/custom_modules/mediaplayer.py $out/bin/waybar-mediaplayer.py
@@ -111,8 +145,9 @@ stdenv.mkDerivation rec {
     changelog = "https://github.com/alexays/waybar/releases/tag/${version}";
     description = "Highly customizable Wayland bar for Sway and Wlroots based compositors";
     license = licenses.mit;
-    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault rodrgz ];
+    maintainers = with maintainers; [ FlorianFranzen minijackson synthetica lovesegfault rodrgz jtbx ];
     platforms = platforms.unix;
     homepage = "https://github.com/alexays/waybar";
+    mainProgram = "waybar";
   };
 }
